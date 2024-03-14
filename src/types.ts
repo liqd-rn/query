@@ -1,20 +1,14 @@
-import { type State } from '@liqd-rn/state';
+export type QueryFn<T> = () => Promise<T | undefined> | T | undefined;
 
-export type QueryCacheValue<T> = { fetching: boolean, data: T | undefined, refetch: () => void }
-
-export type QueryCacheEntry<QueryParams, T> = 
+export type QueryDataState<T> = 
 {
-    params      : QueryParams
-    value       : QueryCacheValue<T>
-    preset      : boolean
-    state       : State<QueryCacheValue<T>>
-    fetchID     : number
-}
-
-export type QueryState<T> = 
-{
-    fetching    : boolean
     data        : T | undefined
+    error       : Error | undefined
+    isError     : boolean
+    isPreset    : boolean
+    isFetching  : boolean
+    set         : ( value: T ) => void
+    refetch     : () => void
 }
 
 export type QueryParamsFilter<QueryParams> = ( params: QueryParams ) => boolean;
