@@ -47,7 +47,7 @@ export default class ParamQuery<QueryParams, T>
 
     public preset( params: QueryParams, data: T ): typeof this
     {
-        this.data( params, true )?.set( data );
+        this.data( params, true )?.preset( data );
 
         return this;   
     }
