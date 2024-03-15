@@ -36,7 +36,7 @@ export default class Query<T>
 
     public refetch(): typeof this
     {
-        this.data.refetch( true );
+        this.data.fetch( true );
 
         return this;   
     }

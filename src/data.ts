@@ -18,7 +18,7 @@ export default class QueryData<T>
             isPreset    : false,
             isFetching  : false,
             set         : this.set.bind( this ),
-            refetch     : this.refetch.bind( this )
+            refetch     : this.fetch.bind( this, true )
         },
         { cache: true });
         this.query = query;
@@ -36,7 +36,7 @@ export default class QueryData<T>
 
     public use(): QueryDataState<T>
     {
-        this.refetch();
+        this.fetch();
 
         return this.state.use()!;
     }
@@ -96,7 +96,7 @@ export default class QueryData<T>
         });
     }
 
-    public async refetch( force: boolean = false ): Promise<void>
+    public async fetch( force: boolean = false ): Promise<void>
     {
         const state = this.state.get()!;
 

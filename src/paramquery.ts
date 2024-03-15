@@ -63,7 +63,7 @@ export default class ParamQuery<QueryParams, T>
     {
         if( typeof params === 'function' )
         {
-            Object.values( this.index ).filter( i => ( params as Function )( i.params )).forEach( i => i.data.refetch( true ));
+            Object.values( this.index ).filter( i => ( params as Function )( i.params )).forEach( i => i.data.fetch( true ));
         }
         else
         {
@@ -71,7 +71,7 @@ export default class ParamQuery<QueryParams, T>
 
             if( data )
             {
-                data.isActive? data.refetch( true ) : data.unset();
+                data.isActive? data.fetch( true ) : data.unset();
             }
         }
 
@@ -80,7 +80,7 @@ export default class ParamQuery<QueryParams, T>
 
     public refetchAll(): typeof this
     {
-        Object.values( this.index ).forEach( i => i.data.isActive? i.data.refetch( true ) : i.data.unset() );
+        Object.values( this.index ).forEach( i => i.data.isActive? i.data.fetch( true ) : i.data.unset() );
 
         return this;
     }
