@@ -1,9 +1,11 @@
 import { State } from '@liqd-rn/state';
+import Timer from '@liqd-rn/timer';
 import type { QueryFn, QueryDataState, QueryRefetchOptions, QueryInvalidateOptions, QueryDataOptions } from './types';
 
 type QueryFetchOptions = QueryRefetchOptions & { force?: false };
 
 const MAX_FETCH_INTERVAL = 50;
+const QueryTimer = new Timer();
 
 export default class QueryData<T>
 {
@@ -11,7 +13,6 @@ export default class QueryData<T>
 
     //@ts-ignore
     private id          : number = ++QueryData.instanceID;
-    private timeout     : ReturnType<typeof setTimeout> | undefined; // TODO use timer lib instead
     private version     : number = 0;
     private lastFetch   : { fetchedAt: number, promise: Promise<void> } | undefined;
     private query       : QueryFn<T>;
@@ -20,14 +21,18 @@ export default class QueryData<T>
     {
         staleTime   : number
         cacheTime   : number
-        onRelease?  : () => void
     };
 
     public state        : State<QueryDataState<T>>;
     
     constructor( query: QueryFn<T>, options: QueryDataOptions = {})
     {
-        this.options = { staleTime: options.staleTime ?? Infinity, cacheTime: options.cacheTime ?? 0, onRelease: options.onRelease };
+        this.options = 
+        {
+            staleTime   : options.staleTime ?? Infinity, 
+            cacheTime   : Math.max( 0.1, options.cacheTime ?? 0 )
+        };
+
         this.state = new State(
         {
             data        : undefined,
@@ -38,7 +43,13 @@ export default class QueryData<T>
             set         : this.set.bind( this ),
             refetch     : this.fetch.bind( this )
         },
-        { cache: true });
+        {
+            cache: true,
+            onRelease   : () => 
+            {
+                QueryTimer.set( this.id + '_cache', () => { console.log( '*** QUERY Cache cleared ***' );  this.unset(); options.onRelease?.() }, this.options.cacheTime * 1000 );
+            }
+        });
 
         this.query = query;
     }
@@ -50,12 +61,11 @@ export default class QueryData<T>
 
     private scheduleInvalidate( staleTime: number = this.options.staleTime )
     {
-        this.timeout && clearTimeout( this.timeout ); // TODO timer;
-
-        if( staleTime !== Infinity )
+        if( staleTime !== Infinity && this.state.get()?.data !== undefined )
         {
-            this.timeout = setTimeout(() => this.invalidate({ silent: true }), staleTime * 1000 );
+            QueryTimer.set( this.id + '_stale', () => { console.log( '*** QUERY Staled ***' ); this.invalidate({ silent: true, soft: true })}, staleTime * 1000 );
         }
+        else{ QueryTimer.unset( this.id + '_stale' )}
         // TODO cacheTime
     }
 
@@ -66,9 +76,14 @@ export default class QueryData<T>
 
     public use(): QueryDataState<T>
     {
-        this.fetch();
+        const state = this.state.get()!;
 
-        //TODO clear cache timeout
+        if( !state.isFetching && ( state.isPreset || state.data === undefined ))
+        {
+            this.fetch();
+        }
+
+        QueryTimer.unset( this.id + '_cache' );
 
         return this.state.use()!;
     }
@@ -175,13 +190,13 @@ export default class QueryData<T>
 
         if( this.state.active )
         {
-            // TODO spravne options
-            await this.fetch();
+            await this.fetch(
+            { 
+                force   : 'soft' in options && options.soft ? false : undefined, 
+                silent  : 'silent' in options ? options.silent : undefined
+            });
         }
-        else
-        {
-            this.timeout && clearTimeout( this.timeout );
-        }
+        else{ console.log('*** QUERY Inactive') }
     }
 
     public async refetch( options: QueryRefetchOptions = {}): Promise<void>
@@ -199,18 +214,16 @@ export default class QueryData<T>
             promise: new Promise<void>( async ( resolve, reject ) =>
             {
                 const state = this.state.get()!;
-
-                // TODO toto poprehadzovat na zaciatok pred promise ze vieme aj lastfetch vratit ked treba
-                if( options.force !== false && ( !state.isFetching && ( state.isPreset || state.data === undefined )))
+                
+                if( options.force !== false || !state.isFetching )
                 {
-                    if( this.timeout ){ clearTimeout( this.timeout )}
-
                     try
                     {
                         let version = ++this.version, data = this.query();
 
                         if( data instanceof Promise )
                         {
+                            //options.silent ? ( state.isFetching = true ) : this.state.set(
                             !options.silent && this.state.set(
                             {
                                 data        : state.data,

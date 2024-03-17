@@ -7,6 +7,7 @@ export type QueryInvalidateOptions = (
 |
 {
     silent?     : true
+    soft?       : true
 })
 
 export type QueryRefetchOptions = 
