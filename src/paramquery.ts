@@ -1,14 +1,14 @@
 import { objectStringify } from '@liqd-js/fast-object-hash';
-import { QueryDataState, QueryParamsFilter } from './types';
+import { QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
 import QueryData from './data';
 
 export default class ParamQuery<QueryParams, T>
 {
     private index = new Map<string, { params: QueryParams, data: QueryData<T>}>();
-
-    public constructor()
+    
+    public constructor( private options: Omit<QueryDataOptions, 'onRelease'> = {})
     {
-
+        
     }
 
     private key( params: QueryParams ): string
@@ -19,7 +19,7 @@ export default class ParamQuery<QueryParams, T>
     //TODO verify
     //private cached( params: QueryParams, create?: undefined ): QueryCacheEntry<QueryParams, T> | undefined
     //private cached( params: QueryParams, create?: true ): QueryCacheEntry<QueryParams, T>
-    private data( params: QueryParams, create?: boolean ): QueryData<T> | undefined
+    private data( params: QueryParams, create: boolean = false ): QueryData<T> | undefined
     {
         let key = this.key( params ), entry = this.index.get( key );
 
@@ -28,7 +28,14 @@ export default class ParamQuery<QueryParams, T>
             this.index.set( key, entry = 
             {
                 params,
-                data: new QueryData<T>(() => this.query( params ))
+                data: new QueryData<T>
+                (
+                    () => this.query( params ),
+                    {
+                        ...this.options,
+                        onRelease: () => this.index.delete( key )
+                    }
+                )
             });
         }
 
@@ -45,44 +52,60 @@ export default class ParamQuery<QueryParams, T>
         return this.data( params, true )!.use();
     }
 
-    public preset( params: QueryParams, data: T ): typeof this
+    public preset( params: QueryParams, data: T ): boolean
     {
-        this.data( params, true )?.preset( data );
-
-        return this;   
+        return this.data( params, true )?.preset( data ) ?? false;
     }
 
-    public set( params: QueryParams, data: T ): typeof this
+    public set( params: QueryParams, data: T ): boolean
     {
-        this.data( params, true )?.set( data );
-
-        return this;
+        return this.data( params, true )?.set( data ) ?? false;
     }
 
-    public refetch( params: QueryParams | QueryParamsFilter<QueryParams> ): typeof this
+    public patch( params: QueryParams, data: Partial<T> ): boolean
     {
-        if( typeof params === 'function' )
+        return this.data( params )?.patch( data ) ?? false;
+    }
+
+    public unset( params: QueryParams ): boolean
+    {
+        return this.data( params )?.unset() || true;
+    }
+
+    private each<R>( params: QueryParams | QueryParamsFilter<QueryParams> | undefined, callback: ({ key, data }: { key: string, data: QueryData<T> }) => R ): R[]
+    {
+        if( params === undefined || typeof params === 'function' )
         {
-            Object.values( this.index ).filter( i => ( params as Function )( i.params )).forEach( i => i.data.fetch( true ));
+            return Object.entries( this.index )
+                .filter(([ _, entry ]) => params === undefined ? true : ( params as Function )( entry.params ))
+                .map(([ key, entry ]) => callback({ key, data: entry.data }));
         }
         else
         {
-            const data = this.data( params );
+            const key = this.key( params ), entry = this.index.get( key );
 
-            if( data )
-            {
-                data.isActive? data.fetch( true ) : data.unset();
-            }
+            return entry ? [ callback({ key, data: entry.data })] : [];
         }
-
-        return this;   
     }
 
-    public refetchAll(): typeof this
+    public async invalidate( params: QueryParams | QueryParamsFilter<QueryParams>, options: QueryInvalidateOptions = {}): Promise<void>
     {
-        Object.values( this.index ).forEach( i => i.data.isActive? i.data.fetch( true ) : i.data.unset() );
+        await Promise.all( this.each( params, ({ data }) => data.invalidate( options )));
+    }
 
-        return this;
+    public async invalidateAll( options: QueryInvalidateOptions = {}): Promise<void>
+    {
+        await Promise.all( this.each( undefined, ({ data }) => data.invalidate( options )));
+    }
+
+    public async refetch( params: QueryParams | QueryParamsFilter<QueryParams>, options: QueryRefetchOptions = {}): Promise<void>
+    {
+        await Promise.all( this.each( params, ({ data }) => data.refetch( options )));
+    }
+
+    public async refetchAll(): Promise<void>
+    {
+        await Promise.all( this.each( undefined, ({ data }) => data.refetch()));
     }
 
     protected query( _: QueryParams ): Promise<T | undefined> | T | undefined

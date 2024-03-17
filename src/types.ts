@@ -1,5 +1,26 @@
 export type QueryFn<T> = () => Promise<T | undefined> | T | undefined;
 
+export type QueryInvalidateOptions = (
+{
+    unset       : true
+}
+|
+{
+    silent?     : true
+})
+
+export type QueryRefetchOptions = 
+{
+    silent?     : true
+};
+
+export type QueryDataOptions =
+{
+    staleTime?  : number
+    cacheTime?  : number
+    onRelease?  : () => void
+}
+
 export type QueryDataState<T> = 
 {
     data        : T | undefined

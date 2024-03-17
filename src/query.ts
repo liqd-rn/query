@@ -1,13 +1,13 @@
-import { QueryDataState } from './types';
+import { QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryRefetchOptions } from './types';
 import QueryData from './data';
 
 export default class Query<T>
 {
     private data: QueryData<T>;
 
-    public constructor()
+    public constructor( options: QueryDataOptions = {})
     {
-        this.data = new QueryData<T>(() => this.query());
+        this.data = new QueryData<T>(() => this.query(), options );
     }
 
     public get(): T | undefined
@@ -20,25 +20,34 @@ export default class Query<T>
         return this.data.use();
     }
 
-    public preset( data: T ): typeof this
+    public preset( data: T ):boolean
     {
-        this.data.preset( data );
-
-        return this;   
+        return this.data.preset( data );
     }
 
-    public set( data: T ): typeof this
+    public set( data: T ): boolean
     {
-        this.data.set( data );
-
-        return this;
+        return this.data.set( data );
     }
 
-    public refetch(): typeof this
+    public patch( data: Partial<T> ): boolean
     {
-        this.data.fetch( true );
+        return this.data.patch( data );
+    }
 
-        return this;   
+    public unset(): boolean
+    {
+        return this.data.unset();
+    }
+
+    public async invalidate( options: QueryInvalidateOptions = {}): Promise<void>
+    {
+        return this.data.invalidate( options );
+    }
+
+    public async refetch( options: QueryRefetchOptions = {}): Promise<void>
+    {
+        return this.data.refetch( options );
     }
 
     protected query(): Promise<T | undefined> | T | undefined
