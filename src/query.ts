@@ -5,7 +5,7 @@ export default class Query<T>
 {
     private data: QueryData<T>;
 
-    public constructor( options: QueryDataOptions = {})
+    public constructor( options: QueryDataOptions = {}, private queryFn?: () => Promise<T | undefined> | T | undefined )
     {
         this.data = new QueryData<T>(() => this.query(), options );
     }
@@ -52,6 +52,15 @@ export default class Query<T>
 
     protected query(): Promise<T | undefined> | T | undefined
     {
-        throw new Error('Not implemented');
+        if( !this.queryFn ){ throw new Error('Not implemented' )}
+
+        return this.queryFn();
     }
+}
+
+export function defineQuery<T>( definition: QueryDataOptions & { query: () => Promise<T | undefined> | T | undefined }): Query<T>
+{
+    const { query, ...options } = definition;
+
+    return new Query<T>( options, query );
 }

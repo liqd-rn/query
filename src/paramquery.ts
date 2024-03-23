@@ -6,7 +6,7 @@ export default class ParamQuery<QueryParams, T>
 {
     private index = new Map<string, { params: QueryParams, data: QueryData<T>}>();
     
-    public constructor( private options: Omit<QueryDataOptions, 'onRelease'> = {})
+    public constructor( private options: Omit<QueryDataOptions, 'onRelease'> = {}, private queryFn: ( params: QueryParams ) => Promise<T | undefined> | T | undefined )
     {
         
     }
@@ -110,6 +110,15 @@ export default class ParamQuery<QueryParams, T>
 
     protected query( params: QueryParams ): Promise<T | undefined> | T | undefined
     {
-        throw new Error('Not implemented '  + params?.toString() );
+        if( !this.queryFn ){ throw new Error('Not implemented '  + params?.toString() )}
+
+        return this.queryFn( params );
     }
+}
+
+export function defineParamQuery<QueryParams, T>( definition: Omit<QueryDataOptions, 'onRelease'> & { query: ( params: QueryParams ) => Promise<T | undefined> | T | undefined }): ParamQuery<QueryParams, T>
+{
+    const { query, ...options } = definition;
+
+    return new ParamQuery<QueryParams, T>( options, query );
 }

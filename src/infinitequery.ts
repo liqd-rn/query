@@ -5,7 +5,7 @@ export default class InfiniteQuery<T,P=any>
 {
     private data: InfiniteQueryData<T,P>;
 
-    public constructor( options: QueryDataOptions = {})
+    public constructor( options: QueryDataOptions = {}, private queryFn? : ( page?: InfiniteQueryPage<P> ) => InfiniteQueryResult<T,P> )
     {
         this.data = new InfiniteQueryData<T,P>(( page?: InfiniteQueryPage<P> ) => this.query( page ), options );
     }
@@ -37,6 +37,15 @@ export default class InfiniteQuery<T,P=any>
 
     protected query( page?: InfiniteQueryPage<P> ): InfiniteQueryResult<T,P>
     {
-        throw new Error( 'Not implemented' + page?.toString() );
+        if( !this.queryFn ){ throw new Error( 'Not implemented' + page?.toString() )}
+        
+        return this.queryFn( page );
     }
+}
+
+export function defineInfiniteQuery<T,P>( definition: QueryDataOptions & { query: ( page?: InfiniteQueryPage<P> ) => InfiniteQueryResult<T,P> }): InfiniteQuery<T,P>
+{
+    const { query, ...options } = definition;
+
+    return new InfiniteQuery<T,P>( options, query );
 }
