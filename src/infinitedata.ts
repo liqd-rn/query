@@ -49,7 +49,7 @@ export default class InfiniteQueryData<T,P>
             hasNextPage         : false,
             isFetchingNextPage  : false,
             refetch             : this.fetch.bind( this ),
-            fetchNextPage       : ( options: Omit<InfiniteQueryFetchPageOptions, 'direction'> = {}) => this.fetchPage.bind( this, { ...options, direction: 'next' }),
+            fetchNextPage       : ( options: Omit<InfiniteQueryFetchPageOptions, 'direction'> = {}) => this.fetchPage({ ...options, direction: 'next' }),
         },
         {
             cache: true,
