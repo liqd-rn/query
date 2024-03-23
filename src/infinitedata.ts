@@ -210,7 +210,7 @@ export default class InfiniteQueryData<T,P>
         // TODO next/prev
         if( !this.pageFetch[options.direction] && !state.isFetching && state.hasNextPage && !state.isFetchingNextPage )
         {
-            this.pageFetch[options.direction] = new Promise<void>( async ( resolve, reject ) =>
+            this.pageFetch[options.direction] = new Promise<void>( async ( resolve, _ ) =>
             {
                 if( options.direction === 'prev' ? this.prevPage : this.nextPage )
                 {
@@ -220,28 +220,26 @@ export default class InfiniteQueryData<T,P>
 
                         if( page instanceof Promise )
                         {
-                            //options.silent ? ( state.isFetching = true ) : this.state.set(
                             this.updateState({ isFetchingNextPage: true }, options.silent );
 
                             page = await page;
-
-                            if( version !== this.version )
-                            {
-                                return this.lastFetch ? this.lastFetch.promise.then( resolve ).catch( reject ) : resolve();
-                            }
                         }
 
-                        this.prevPage = page?.prevPage;
-                        this.nextPage = page?.nextPage;
+                        this.pageFetch[options.direction] = undefined;
 
-                        this.updateState(
+                        if( version === this.version )
                         {
-                            data: [ ...( state.data ?? [] ), ...( page?.data ?? [] )],
-                            error: undefined, isError: false, isPreset: false, isFetching: false,
-                            hasNextPage: this.nextPage !== undefined, isFetchingNextPage: false
-                        });
-                        
-                        //this.scheduleInvalidate();
+                            this.prevPage = page?.prevPage;
+                            this.nextPage = page?.nextPage;
+
+                            this.updateState(
+                            {
+                                data: options.direction === 'prev' ? [ ...( page?.data ?? [] ), ...( state.data ?? [])] : [ ...( state.data ?? [] ), ...( page?.data ?? [])],
+                                hasNextPage: this.nextPage !== undefined, isFetchingNextPage: false
+                            });
+
+                            this.scheduleInvalidate();
+                        }
                     }
                     catch( e )
                     {
