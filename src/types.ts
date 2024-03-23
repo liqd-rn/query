@@ -1,4 +1,8 @@
+export type InfiniteQueryFnPage<P> = { param: P, direction?: 'next' | 'prev' };
+export type InfiniteQueryFnResult<T,P> = Promise<{ data: T[], nextPage?: P, prevPage?: P } | undefined> | { data: T[], nextPage?: P, prevPage?: P } | undefined;
+
 export type QueryFn<T> = () => Promise<T | undefined> | T | undefined;
+export type InfiniteQueryFn<T,P> = ( page?: InfiniteQueryFnPage<P> ) => InfiniteQueryFnResult<T,P>
 
 export type QueryInvalidateOptions = (
 {
@@ -14,6 +18,12 @@ export type QueryRefetchOptions =
 {
     silent?     : true
 };
+
+export type InfiniteQueryFetchPageOptions =
+{
+    direction   : 'next' | 'prev'
+    silent?     : true
+}
 
 export type QueryDataOptions =
 {
@@ -31,6 +41,13 @@ export type QueryDataState<T> =
     isFetching  : boolean
     set         : ( value: T ) => void
     refetch     : () => void
+}
+
+export type InfiniteQueryDataState<T> = Omit<QueryDataState<T[]>, 'set'> &
+{
+    hasNextPage         : boolean
+    isFetchingNextPage  : boolean
+    fetchNextPage       : () => void
 }
 
 export type QueryParamsFilter<QueryParams> = ( params: QueryParams ) => boolean;

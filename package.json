@@ -1,6 +1,6 @@
 {
   "name": "@liqd-rn/query",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "",
   "author": "radixxko",
   "license": "MIT",
@@ -10,7 +10,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "version": "npm i && tsc && npm publish --access public"
+    "version": "git pull && npm i && tsc && npm publish --access public && npm run commit && git push",
+    "commit": "node -e \"const version = require('./package.json').version.trim(); require('child_process').execSync('git add . && git commit -m \\\"Version ' + version + '\\\"');\""
   },
   "repository": {
     "type": "git",
@@ -19,14 +20,14 @@
   "dependencies": {
     "@liqd-js/fast-object-hash": "^2.0.0",
     "@liqd-rn/state": "^1.5.4",
-    "@liqd-rn/timer": "^1.0.2"
+    "@liqd-rn/timer": "^1.0.3"
   },
   "peerDependencies": {
     "react": "*"
   },
   "devDependencies": {
     "react": "18.2.0",
-    "@types/react": "^18.2.66",
-    "typescript": "^5.4.2"
+    "@types/react": "^18.2.69",
+    "typescript": "^5.4.3"
   }
 }

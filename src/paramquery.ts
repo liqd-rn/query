@@ -108,8 +108,8 @@ export default class ParamQuery<QueryParams, T>
         await Promise.all( this.each( undefined, ({ data }) => data.refetch()));
     }
 
-    protected query( _: QueryParams ): Promise<T | undefined> | T | undefined
+    protected query( params: QueryParams ): Promise<T | undefined> | T | undefined
     {
-        throw new Error('Not implemented');
+        throw new Error('Not implemented '  + params?.toString() );
     }
 }

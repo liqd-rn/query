@@ -69,6 +69,15 @@ export default class QueryData<T>
         // TODO cacheTime
     }
 
+    private updateState( update: Partial<QueryDataState<T>>, silent?: true )
+    {
+        const state = this.state.get()!;
+
+        Object.entries( update ).forEach(([ key, value ]) => (state as any)[ key ] = value );
+        
+        ( silent !== true ) && this.state.set( state );
+    }
+
     public get(): T | undefined
     {
         return this.state.get()!.data;
@@ -94,16 +103,7 @@ export default class QueryData<T>
 
         if( state.data === undefined )
         {
-            this.state.set(
-            {
-                data        : value,
-                error       : undefined,
-                isError     : false,
-                isPreset    : true,
-                isFetching  : false,
-                set         : state.set,
-                refetch     : state.refetch
-            });
+            this.updateState({ data: value, error: undefined, isError: false, isPreset: true, isFetching: false });
         }
 
         return ( state.data !== undefined );
@@ -113,20 +113,10 @@ export default class QueryData<T>
     {
         ++this.version;
 
-        const state = this.state.get()!;
-
         this.lastFetch = undefined;
         this.events.updatedAt = Date.now();
-        this.state.set(
-        {
-            data        : value,
-            error       : undefined,
-            isError     : false,
-            isPreset    : false,
-            isFetching  : false,
-            set         : state.set,
-            refetch     : state.refetch
-        });
+
+        this.updateState({ data: value, error: undefined, isError: false, isPreset: false, isFetching: false });
 
         this.scheduleInvalidate( options.staleTime );
 
@@ -141,16 +131,7 @@ export default class QueryData<T>
         {
             ++this.version;
 
-            this.state.set(
-            {
-                data        : { ...state.data, ...update },
-                error       : state.error,
-                isError     : state.isError,
-                isPreset    : state.isPreset,
-                isFetching  : state.isFetching,
-                set         : state.set,
-                refetch     : state.refetch
-            });
+            this.updateState({ data: { ...state.data, ...update } });
 
             // TODO force additional refetch if one is in progress
         }
@@ -162,20 +143,10 @@ export default class QueryData<T>
     {
         ++this.version;
 
-        const state = this.state.get()!;
-
         this.lastFetch = undefined;
         this.events.updatedAt = 0;
-        this.state.set(
-        {
-            data        : undefined,
-            error       : undefined,
-            isError     : false,
-            isPreset    : false,
-            isFetching  : false,
-            set         : state.set,
-            refetch     : state.refetch
-        });
+
+        this.updateState({ data: undefined, error: undefined, isError: false, isPreset: false, isFetching: false });
         
         this.scheduleInvalidate( Infinity );
 
@@ -206,77 +177,50 @@ export default class QueryData<T>
     
     private async fetch( options: QueryFetchOptions = {}): Promise<void>
     {
-        if( this.lastFetch && Date.now() - this.lastFetch.fetchedAt < MAX_FETCH_INTERVAL ){ return this.lastFetch.promise }
+        // TODO ak prvy bol silent a tento nie je emitnut stav fetchovania isFetching
 
-        this.lastFetch = 
+        if( !this.lastFetch || Date.now() - this.lastFetch.fetchedAt >= MAX_FETCH_INTERVAL )
         {
-            fetchedAt: Date.now(),
-            promise: new Promise<void>( async ( resolve, reject ) =>
+            this.lastFetch = 
             {
-                const state = this.state.get()!;
-                
-                if( options.force !== false || !state.isFetching )
+                fetchedAt: Date.now(),
+                promise: new Promise<void>( async ( resolve, reject ) =>
                 {
-                    try
+                    const state = this.state.get()!;
+                    
+                    if( options.force !== false || !state.isFetching )
                     {
-                        let version = ++this.version, data = this.query();
-
-                        if( data instanceof Promise )
+                        try
                         {
-                            //options.silent ? ( state.isFetching = true ) : this.state.set(
-                            !options.silent && this.state.set(
-                            {
-                                data        : state.data,
-                                error       : state.error,
-                                isError     : state.isError,
-                                isPreset    : state.isPreset,
-                                isFetching  : true,
-                                set         : state.set,
-                                refetch     : state.refetch
-                            });
+                            let version = ++this.version, data = this.query();
 
-                            data = await data;
-
-                            if( version !== this.version )
+                            if( data instanceof Promise )
                             {
-                                return this.lastFetch ? this.lastFetch.promise.then( resolve ).catch( reject ) : resolve();
+                                this.updateState({ isFetching: true }, options.silent );
+
+                                data = await data;
+
+                                if( version !== this.version )
+                                {
+                                    return this.lastFetch ? this.lastFetch.promise.then( resolve ).catch( reject ) : resolve();
+                                }
                             }
+
+                            this.updateState({ data: data, error: undefined, isError: false, isPreset: false, isFetching: false });
+
+                            this.scheduleInvalidate();
                         }
-
-                        this.state.set(
+                        catch( e )
                         {
-                            data        : data,
-                            error       : undefined,
-                            isError     : false,
-                            isPreset    : false,
-                            isFetching  : false,
-                            set         : state.set,
-                            refetch     : state.refetch
-                        });
+                            //TODO retries OR sucessfull fetch in between, mozno error
 
-                        this.scheduleInvalidate();
+                            this.scheduleInvalidate( 2 );
+                        }
                     }
-                    catch( e )
-                    {
-                        //TODO retries OR sucessfull fetch in between
 
-                        this.state.set(
-                        {
-                            data        : state.data,
-                            error       : undefined,
-                            isError     : false,
-                            isPreset    : false,
-                            isFetching  : false,
-                            set         : state.set,
-                            refetch     : state.refetch
-                        });
-
-                        this.scheduleInvalidate( 2 );
-                    }
-                }
-
-                resolve();
-            })
+                    resolve();
+                })
+            }
         }
 
         await this.lastFetch.promise;
