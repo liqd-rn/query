@@ -1,4 +1,4 @@
-import { InfiniteQueryDataState, InfiniteQueryFnPage, InfiniteQueryFnResult, QueryDataOptions, QueryInvalidateOptions, QueryRefetchOptions } from './types';
+import { InfiniteQueryDataState, InfiniteQueryPage, InfiniteQueryResult, QueryDataOptions, QueryInvalidateOptions, QueryRefetchOptions } from './types';
 import InfiniteQueryData from './infinitedata';
 
 export default class InfiniteQuery<T,P=any>
@@ -7,7 +7,7 @@ export default class InfiniteQuery<T,P=any>
 
     public constructor( options: QueryDataOptions = {})
     {
-        this.data = new InfiniteQueryData<T,P>(( page?: InfiniteQueryFnPage<P> ) => this.query( page ), options );
+        this.data = new InfiniteQueryData<T,P>(( page?: InfiniteQueryPage<P> ) => this.query( page ), options );
     }
 
     public get(): T[] | undefined
@@ -35,7 +35,7 @@ export default class InfiniteQuery<T,P=any>
         return this.data.refetch( options );
     }
 
-    protected query( page?: InfiniteQueryFnPage<P> ): InfiniteQueryFnResult<T,P>
+    protected query( page?: InfiniteQueryPage<P> ): InfiniteQueryResult<T,P>
     {
         throw new Error( 'Not implemented' + page?.toString() );
     }

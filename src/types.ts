@@ -1,8 +1,8 @@
-export type InfiniteQueryFnPage<P> = { param: P, direction?: 'next' | 'prev' };
-export type InfiniteQueryFnResult<T,P> = Promise<{ data: T[], nextPage?: P, prevPage?: P } | undefined> | { data: T[], nextPage?: P, prevPage?: P } | undefined;
+export type InfiniteQueryPage<P> = { param: P, direction?: 'next' | 'prev' };
+export type InfiniteQueryResult<T,P> = Promise<{ data: T[], nextPage?: P, prevPage?: P } | undefined> | { data: T[], nextPage?: P, prevPage?: P } | undefined;
 
 export type QueryFn<T> = () => Promise<T | undefined> | T | undefined;
-export type InfiniteQueryFn<T,P> = ( page?: InfiniteQueryFnPage<P> ) => InfiniteQueryFnResult<T,P>
+export type InfiniteQueryFn<T,P> = ( page?: InfiniteQueryPage<P> ) => InfiniteQueryResult<T,P>
 
 export type QueryInvalidateOptions = (
 {
