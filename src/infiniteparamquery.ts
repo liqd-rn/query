@@ -101,7 +101,7 @@ export default class InfiniteParamQuery<QueryParams, T, P=any>
     }
 }
 
-export function defineInfiniteParamQuery<QueryParams, T, P>( definition: Omit<QueryDataOptions, 'onRelease'> & { query: ( params: QueryParams ) => InfiniteQueryResult<T,P> }): InfiniteParamQuery<QueryParams, T, P>
+export function defineInfiniteParamQuery<QueryParams, T, P>( definition: Omit<QueryDataOptions, 'onRelease'> & { query: ( params: QueryParams, page?: InfiniteQueryPage<P> ) => InfiniteQueryResult<T,P> }): InfiniteParamQuery<QueryParams, T, P>
 {
     const { query, ...options } = definition;
 
