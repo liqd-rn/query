@@ -9,6 +9,8 @@ const QueryTimer = new Timer();
 
 //TODO param to say which end can receive more data and do refetches
 
+// TODO priority ku kazdej query, prioritnejsie fetchovat prv ak je nejaky fetchLimit
+
 export default class InfiniteQueryData<T,P>
 {
     private static instanceID = 0;
