@@ -49,6 +49,7 @@ export default class InfiniteParamQuery<QueryParams, T, P=any>
 
     public use( params: QueryParams ): InfiniteQueryDataState<T>
     {
+        // TODO pravdepodobne tu nam bude treba mat samostatne useEffect s dependencies na params
         return this.data( params, true )!.use();
     }
 

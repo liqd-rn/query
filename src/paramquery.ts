@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { objectStringify } from '@liqd-js/fast-object-hash';
 import { QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
 import QueryData from './data';
@@ -49,7 +50,12 @@ export default class ParamQuery<QueryParams, T>
 
     public use( params: QueryParams ): QueryDataState<T>
     {
-        return this.data( params, true )!.use();
+        const [ state, setState ] = useState<QueryDataState<T>>( this.data( params, true )!.use() );
+
+        useEffect(() => { setState( this.data( params )!.use())}, [ this.key( params )]);
+
+        // TODO pravdepodobne tu nam bude treba mat samostatne useEffect s dependencies na params
+        return state;
     }
 
     public preset( params: QueryParams, data: T ): boolean
