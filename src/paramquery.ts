@@ -50,16 +50,23 @@ export default class ParamQuery<QueryParams, T>
 
     public use( params: QueryParams ): QueryDataState<T>
     {
-        const [ state, setState ] = useState<QueryDataState<T>>( this.data( params, true )!.use() );
+        const [ state, setState ] = useState<{value: QueryDataState<T>}>({ value: this.data( params, true )!.use() });
 
         useEffect(() => 
         {
-            setState( this.data( params )!.use());
+            const data = this.data( params, true )!;
+            const handler = ( value: QueryDataState<T> | undefined ) => setState({ value: value! });
+
+            setState({ value: data.use() });
+
+            data.state.on( 'update', handler );
+
+            return () => { data.state.off( 'update', handler )}
         },
         [ this.key( params )]);
 
         // TODO pravdepodobne tu nam bude treba mat samostatne useEffect s dependencies na params
-        return state;
+        return state.value;
     }
 
     public preset( params: QueryParams, data: T ): boolean
