@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { objectStringify } from '@liqd-js/fast-object-hash';
 import { QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
-import QueryData from './data';
+import QueryData, { useNested } from './data';
 
 export default class ParamQuery<QueryParams, T>
 {
@@ -50,14 +50,25 @@ export default class ParamQuery<QueryParams, T>
 
     public use( params: QueryParams ): QueryDataState<T>
     {
-        const [ state, setState ] = useState<{value: QueryDataState<T>}>({ value: this.data( params, true )!.use() });
+        const [ state, setState ] = useState<{value: QueryDataState<T>}>({ value: this.data( params, true )![useNested]() });
+
+        const handler = useCallback(( value: QueryDataState<T> | undefined ) => setState({ value: value! }), []);
 
         useEffect(() => 
         {
             const data = this.data( params, true )!;
-            const handler = ( value: QueryDataState<T> | undefined ) => setState({ value: value! });
 
-            setState({ value: data.use() });
+            data.state.on( 'update', handler );
+
+            return () => { data.state.off( 'update', handler )}
+        },
+        []);
+
+        useEffect(() => 
+        {
+            const data = this.data( params, true )!;
+            
+            setState({ value: data[useNested]() });
 
             data.state.on( 'update', handler );
 

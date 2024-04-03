@@ -7,6 +7,8 @@ type QueryFetchOptions = QueryRefetchOptions & { force?: false };
 const MAX_FETCH_INTERVAL = 50;
 const QueryTimer = new Timer();
 
+export const useNested = Symbol('useNested');
+
 export default class QueryData<T>
 {
     private static instanceID = 0;
@@ -95,6 +97,20 @@ export default class QueryData<T>
         QueryTimer.unset( this.id + '_cache' );
 
         return this.state.use()!;
+    }
+
+    public [useNested](): QueryDataState<T>
+    {
+        const state = this.state.get()!;
+
+        if( !state.isFetching && ( state.isPreset || state.data === undefined ))
+        {
+            this.fetch();
+        }
+
+        QueryTimer.unset( this.id + '_cache' );
+
+        return state;
     }
 
     public preset( value: T ): boolean

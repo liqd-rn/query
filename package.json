@@ -1,6 +1,6 @@
 {
   "name": "@liqd-rn/query",
-  "version": "0.3.2-beta.4",
+  "version": "0.3.2-beta.5",
   "description": "",
   "author": "radixxko",
   "license": "MIT",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@liqd-js/fast-object-hash": "^2.0.0",
-    "@liqd-rn/state": "^1.5.5",
+    "@liqd-rn/state": "^1.5.6",
     "@liqd-rn/timer": "^1.0.3"
   },
   "peerDependencies": {
