@@ -1,5 +1,6 @@
+import { useCallback, useEffect, useState } from 'react';
 import { objectStringify } from '@liqd-js/fast-object-hash';
-import { InfiniteQueryDataState, InfiniteQueryPage, InfiniteQueryResult, QueryDataOptions, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
+import { useNested, InfiniteQueryDataState, InfiniteQueryPage, InfiniteQueryResult, QueryDataOptions, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
 import InfiniteQueryData from './infinitedata';
 
 export default class InfiniteParamQuery<QueryParams, T, P=any>
@@ -49,8 +50,33 @@ export default class InfiniteParamQuery<QueryParams, T, P=any>
 
     public use( params: QueryParams ): InfiniteQueryDataState<T>
     {
-        // TODO pravdepodobne tu nam bude treba mat samostatne useEffect s dependencies na params
-        return this.data( params, true )!.use();
+        const [ state, setState ] = useState<{value: InfiniteQueryDataState<T>}>({ value: this.data( params, true )![useNested]() });
+
+        const handler = useCallback(( value: InfiniteQueryDataState<T> | undefined ) => setState({ value: value! }), []);
+
+        useEffect(() => 
+        {
+            const data = this.data( params, true )!;
+
+            data.state.on( 'update', handler );
+
+            return () => { data.state.off( 'update', handler )}
+        },
+        []);
+
+        useEffect(() => 
+        {
+            const data = this.data( params, true )!;
+            
+            setState({ value: data[useNested]() });
+
+            data.state.on( 'update', handler );
+
+            return () => { data.state.off( 'update', handler )}
+        },
+        [ this.key( params )]);
+        
+        return state.value;
     }
 
     public unset( params: QueryParams ): boolean

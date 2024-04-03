@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { objectStringify } from '@liqd-js/fast-object-hash';
-import { QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
-import QueryData, { useNested } from './data';
+import { useNested, QueryDataOptions, QueryDataState, QueryInvalidateOptions, QueryParamsFilter, QueryRefetchOptions } from './types';
+import QueryData from './data';
 
 export default class ParamQuery<QueryParams, T>
 {
@@ -75,8 +75,7 @@ export default class ParamQuery<QueryParams, T>
             return () => { data.state.off( 'update', handler )}
         },
         [ this.key( params )]);
-
-        // TODO pravdepodobne tu nam bude treba mat samostatne useEffect s dependencies na params
+        
         return state.value;
     }
 

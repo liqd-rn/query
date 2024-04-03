@@ -1,13 +1,11 @@
 import { State } from '@liqd-rn/state';
 import Timer from '@liqd-rn/timer';
-import type { QueryFn, QueryDataState, QueryRefetchOptions, QueryInvalidateOptions, QueryDataOptions } from './types';
+import { useNested, QueryFn, QueryDataState, QueryRefetchOptions, QueryInvalidateOptions, QueryDataOptions } from './types';
 
 type QueryFetchOptions = QueryRefetchOptions & { force?: false };
 
 const MAX_FETCH_INTERVAL = 50;
 const QueryTimer = new Timer();
-
-export const useNested = Symbol('useNested');
 
 export default class QueryData<T>
 {

@@ -1,6 +1,6 @@
 import { State } from '@liqd-rn/state';
 import Timer from '@liqd-rn/timer';
-import type { InfiniteQueryFn, QueryRefetchOptions, QueryInvalidateOptions, QueryDataOptions, InfiniteQueryDataState, InfiniteQueryFetchPageOptions } from './types';
+import { useNested, InfiniteQueryFn, QueryRefetchOptions, QueryInvalidateOptions, QueryDataOptions, InfiniteQueryDataState, InfiniteQueryFetchPageOptions } from './types';
 
 type QueryFetchOptions = QueryRefetchOptions & { force?: false };
 
@@ -105,6 +105,20 @@ export default class InfiniteQueryData<T,P>
         QueryTimer.unset( this.id + '_cache' );
 
         return this.state.use()!;
+    }
+
+    public [useNested](): InfiniteQueryDataState<T>
+    {
+        const state = this.state.get()!;
+
+        if( !state.isFetching && ( state.isPreset || state.data === undefined ))
+        {
+            this.fetch();
+        }
+
+        QueryTimer.unset( this.id + '_cache' );
+
+        return state;
     }
 
     public unset(): boolean

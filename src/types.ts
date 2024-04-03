@@ -1,3 +1,5 @@
+export const useNested = Symbol('useNested');
+
 export type InfiniteQueryPage<P> = { param: P, direction?: 'next' | 'prev' };
 export type InfiniteQueryResult<T,P> = Promise<{ data: T[], nextPage?: P, prevPage?: P } | undefined> | { data: T[], nextPage?: P, prevPage?: P } | undefined;
 
