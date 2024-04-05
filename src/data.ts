@@ -229,6 +229,8 @@ export default class QueryData<T>
                             //TODO zrusit isFetching ak je rovnaky fetch ako aktualny
                             //TODO retries OR sucessfull fetch in between, mozno error
 
+                            this.updateState({ error: e as Error, isError: true, isFetching: false });
+
                             this.scheduleInvalidate( 2 );
                         }
                     }

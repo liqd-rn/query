@@ -1,6 +1,6 @@
 {
   "name": "@liqd-rn/query",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "",
   "author": "radixxko",
   "license": "MIT",
@@ -28,6 +28,6 @@
   "devDependencies": {
     "react": "18.2.0",
     "@types/react": "^18.2.74",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.4"
   }
 }

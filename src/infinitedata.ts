@@ -207,6 +207,8 @@ export default class InfiniteQueryData<T,P>
                         {
                             //TODO retries OR sucessfull fetch in between, mozno error
                             
+                            //this.updateState({ error: e as Error, isError: true, isFetching: false });
+                            
                             this.scheduleInvalidate( 2 );
                         }
                     }
