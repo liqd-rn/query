@@ -127,7 +127,14 @@ export default class ParamQuery<QueryParams, T>
 
     public async refetch( params: QueryParams | QueryParamsFilter<QueryParams>, options: QueryRefetchOptions = {}): Promise<void>
     {
-        await Promise.all( this.each( params, ({ data }) => data.refetch( options )));
+        if( typeof params === 'function' )
+        {
+            await Promise.all( this.each( params, ({ data }) => data.refetch( options )));
+        }
+        else
+        {
+            await this.data( params, true )?.refetch( options );
+        }
     }
 
     public async refetchAll(): Promise<void>
