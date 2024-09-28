@@ -29,8 +29,8 @@ export type InfiniteQueryFetchPageOptions =
 
 export type QueryDataOptions =
 {
-    staleTime?  : number
-    cacheTime?  : number
+    staleTime?  : number // TODO toto moze byt aj function co bude brat argumentu z params a podla toho vracat staleTime, use takisto moze a prepise na min
+    cacheTime?  : number // TODO toto moze byt aj function co bude brat argumentu z params a podla toho vracat staleTime, use takisto moze a prepise na max
     onRelease?  : () => void
 }
 
